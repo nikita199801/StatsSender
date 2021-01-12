@@ -5,7 +5,10 @@ const { resolve } = require('path');
 const xlsx = require('xlsx')
 const fileDir = __dirname+"/stats.xlsx"
 
-
+let rawData = fs.readFileSync('auth-data.json')
+let authData = JSON.parse(rawData)
+let login = authData["login"]
+let psw  = authData["psw"]
 
 statsData = {
     coldWater : 0,
