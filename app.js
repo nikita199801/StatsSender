@@ -70,12 +70,16 @@ function getLsINFO(sessionID) {
 }
 authAndGetSessionID(login,psw).then( (sessionID)=> {
     getLsINFO(sessionID).then((data) => {
-        let cookie = data[0] 
-        console.log(data[0], data[1])
-        const req = https.request(`https://my.mosenergosbyt.ru/accounts/${serviceID}/events/payment-doc`, {port: 443,
-        method: 'GET', headers: {'session-cookie':`${cookie}`}}, (res) => {
-            console.log('hashha')
+        let cookie = data[0]
+        let headers = {
+            'Cookie' : cookie
+        }
+        const req = https.request(`https://my.mosenergosbyt.ru/accounts/${serviceID}/tranfer-indications`, { port: 443, method: 'GET', headers:{}}, (res) => {
+            res.on('data', (data) => {
+                console.log(JSON.parse(data))
+            })
         })
+        req.end()
     })
 
 })
