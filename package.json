@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "googleapis": "^39.2.0",
     "moment": "^2.29.1",
     "save": "^2.4.0",
     "xlsx": "^0.16.9"
