@@ -7,6 +7,7 @@ const moment = require('moment');
 const { Cipher } = require('crypto');
 const fileDir = __dirname+"/stats.xlsx"
 const {google} = require('googleapis')
+const st = require('./gsheetconnection')
 
 let rawData = fs.readFileSync('auth-data.json')
 let authData = JSON.parse(rawData)
@@ -118,15 +119,15 @@ authAndGetSessionID(login,psw).then( sessionID => {
 
 })
 
-// function CollectDataFromExel(dir){
-//     const workbook = xlsx.readFile(dir)
-//     const sheet = workbook.Sheets[workbook.SheetNames[0]]
-//     statsData.coldWater = sheet["A2"].v
-//     statsData.hotWater = sheet["B2"].v
-//     statsData.electro = sheet["C2"].v
-//     statsData.heat =  sheet["D2"].v
-//     console.log(JSON.stringify(statsData))
-// }
+function CollectDataFromExel(dir){
+    const workbook = xlsx.readFile(dir)
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
+    statsData.coldWater = sheet["A2"].v
+    statsData.hotWater = sheet["B2"].v
+    statsData.electro = sheet["C2"].v
+    statsData.heat =  sheet["D2"].v
+    console.log(JSON.stringify(statsData))
+}
 
 https.createServer((req, res) => {
     // CollectDataFromExel(fileDir)
