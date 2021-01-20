@@ -1,11 +1,13 @@
 const fs = require('fs')
 const readline = require('readline');
+const http = require('http');
 const {google} = require('googleapis');
 const { fusiontables } = require('googleapis/build/src/apis/fusiontables');
 const { get } = require('http');
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const TOKEN_PATH = 'token.json';
 
+getStatsWrapper()()
 
 function getStatsWrapper(){
   return function(){
@@ -15,10 +17,35 @@ function getStatsWrapper(){
     })
     
     async function getStats(auth){
-      row = await getCurrentRow(auth)
-      stats = await getCurrentStats(auth, row)
+      let row = await getCurrentRow(auth)
+      let counterStats = await getCurrentStats(auth, row)
+      sendData({counterStats:counterStats})
     }
-    
+
+    function sendData(data){
+      let body =JSON.stringify(data)
+      options = {
+        method: 'POST',
+        headers : {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(body)
+        },
+      }
+      console.log(`Sending data on server`)
+      const req = http.request('http://localhost:3000/send', options, (res)=>{
+        console.log(`Data sent ${body}`)
+        console.log('Waiting for response...')
+        if (res.statusCode === 200) {
+          console.log('Data Recived')
+          return
+        } else {
+          console.error("Data sending failed")
+          return
+        }
+      })
+      req.end(body)
+    }
+
     function authorize(credentials, callback) {
       const {client_secret, client_id, redirect_uris} = credentials.installed;
       const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
@@ -105,4 +132,4 @@ function getStatsWrapper(){
     }
   }
 }
-  module.exports = getStatsWrapper
+  // module.exports = getStatsWrapper
