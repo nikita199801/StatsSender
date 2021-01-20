@@ -1,5 +1,7 @@
 const { Stats, stat } = require('fs');
 const http = require('http');
+const dataSending = require('./app')
+// const gsh = require('./gsheetconnection')
 
 const hostname = '127.0.0.1';
 const port = 3000;
@@ -13,6 +15,7 @@ function eventHandler(req, res){
                     res.setHeader('Content-Type', 'text/plain');
                     req.on('data', data =>{
                         let stats = JSON.parse(data).counterStats
+                        dataSending(stats)
                         console.log('Income data:', stats)
                     })
                     req.on('end', ()=>{
@@ -30,9 +33,7 @@ function eventHandler(req, res){
     }
 }
 
-const server = http.createServer((req, res) => {
-  
-});
+const server = http.createServer(eventHandler);
 
 server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
