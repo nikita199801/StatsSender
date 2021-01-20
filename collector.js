@@ -17,7 +17,9 @@ function getStatsWrapper(){
 async function getStats(auth){
   let row = await getCurrentRow(auth)
   let counterStats = await getCurrentStats(auth, row)
-  sendData({counterStats:counterStats})
+  setTimeout(() => {
+    sendData({counterStats:counterStats})
+  }, 2000)
 }
 
 function sendData(data){
@@ -124,7 +126,7 @@ function setRowVar(auth, currentRowVar) {
     if(err){
       console.log(err)
     } else {
-      console.log("J2 cell now is %d", values[0][0])
+      console.log("\nJ2 cell now is %d", values[0][0])
     }
   })
 }

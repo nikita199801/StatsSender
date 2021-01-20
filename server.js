@@ -23,6 +23,8 @@ function eventHandler(req, res){
                 case '/ready':{
                     console.log('Data is ready to transfer, starting...')
                     collectData()   
+                    res.end()
+                    break
                 }
             }
         }
@@ -34,17 +36,18 @@ function eventHandler(req, res){
                     res.setHeader('Content-Type', 'text/plain');
                     req.on('data', data =>{
                         let stats = JSON.parse(data).counterStats
-                        dataSending(stats)
                         console.log('Income data:', stats)
-                    })
-                    req.on('end', ()=>{
                         console.log('Successfully recived data from spreadSheet')
+                        dataSending(stats)
+                    })
+                    res.end();
+                    req.on('end', ()=>{
+                        console.log('Data sendig finished!')
                     })
 
                     req.on('error', (err)=> {
                         console.error("Something went wrong", err)
                     })
-                    res.end();
                     break;
                 }
             }
