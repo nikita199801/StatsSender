@@ -124,7 +124,7 @@ function setRowVar(auth, currentRowVar) {
     if(err){
       console.log(err)
     } else {
-      console.log("Updated J2 %d", values[0][0])
+      console.log("J2 cell now is %d", values[0][0])
     }
   })
 }

@@ -1,16 +1,35 @@
 const { Stats, stat } = require('fs');
 const http = require('http');
-const dataSending = require('./app')
-// const gsh = require('./gsheetconnection')
+const dataSending = require('./sender')
+const collectData = require('./collector')
 
 const hostname = '127.0.0.1';
 const port = 3000;
 
+function startApp(){
+    const server = http.createServer(eventHandler);
+
+    server.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+
+    });
+}
+
+
 function eventHandler(req, res){
     switch (req.method){
+        case 'GET':{
+            switch(req.url){
+                case '/ready':{
+                    console.log('Data is ready to transfer, starting...')
+                    collectData()   
+                }
+            }
+        }
         case 'POST':{
             switch(req.url){
                 case '/send':{
+                    console.log("Incoming request...")
                     res.statusCode = 200
                     res.setHeader('Content-Type', 'text/plain');
                     req.on('data', data =>{
@@ -33,8 +52,6 @@ function eventHandler(req, res){
     }
 }
 
-const server = http.createServer(eventHandler);
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+
+module.exports = startApp
