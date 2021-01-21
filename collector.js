@@ -16,10 +16,13 @@ function getStatsWrapper(){
 
 async function getStats(auth){
   let row = await getCurrentRow(auth)
-  let counterStats = await getCurrentStats(auth, row)
-  setTimeout(() => {
-    sendData({counterStats:counterStats})
-  }, 2000)
+  getCurrentStats(auth, row).then((counterStats)=>{
+    if (counterStats[4].toLowerCase() == 'true') {
+      sendData({counterStats:counterStats})
+    } else {
+      console.error("Some of the cells are empty. Data couldn't be sent")
+    }
+  }).catch(err => console.error(err))
 }
 
 function sendData(data){
@@ -89,7 +92,7 @@ function getCurrentRow(auth){
     const sheets = google.sheets({version: 'v4', auth});
     sheets.spreadsheets.values.get({
       spreadsheetId: '1-RSIrL-tMbOUyBpy63WrQCMvo43OtUd-Nmn2pNOnH0M',
-      range: "'Лист1'!J2",
+      range: "'Лист1'!H2",
     }, (err, res) => {
       if (err) reject('The API returned an error: ' + err)
       resolve(res.data.values)
@@ -104,9 +107,14 @@ function getCurrentStats(auth, row){
       range: "'Лист1'!A2:E",
     }, (err, res) => {
       if (err) reject('The API returned an error: ' + err)
-      setRowVar(auth, row)
       const rows = res.data.values;
-      (rows[row][4])?resolve(rows[row]):reject("This stats already sent")
+      if (rows[row][4].toLowerCase() == 'true'){
+        setRowVar(auth, row)
+        console.log("Data is ready, sending...")
+        resolve(rows[row])
+      } else {
+        reject("Stats are incomplete or already have been sent")
+      }
     });
   })
 }
@@ -119,14 +127,14 @@ function setRowVar(auth, currentRowVar) {
   }
   sheets.spreadsheets.values.update({
     spreadsheetId: '1-RSIrL-tMbOUyBpy63WrQCMvo43OtUd-Nmn2pNOnH0M',
-    range: "J2",
+    range: "H2",
     valueInputOption:'RAW',
     resource: resource
   }, (err, result) =>{
     if(err){
       console.log(err)
     } else {
-      console.log("\nJ2 cell now is %d", values[0][0])
+      console.log("\nH2 cell now is %d", values[0][0])
     }
   })
 }

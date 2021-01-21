@@ -11,6 +11,8 @@
   "dependencies": {
     "googleapis": "^39.2.0",
     "moment": "^2.29.1",
+    "node-cron": "^2.0.3",
+    "nodemailer": "^6.4.17",
     "save": "^2.4.0",
     "xlsx": "^0.16.9"
   }

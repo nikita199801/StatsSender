@@ -2,16 +2,20 @@ const { rejects } = require('assert');
 const { resolve } = require('path');
 const moment = require('moment');
 const fs = require('fs');
-const https = require('https')
+const https = require('https');
+const { auth } = require('googleapis/build/src/apis/abusiveexperiencereport');
+const { log } = require('util');
 
-
+let optionsPost = {
+    port: 443, 
+    method: 'POST',
+    headers:{}
+  };
 
 let rawData = fs.readFileSync('auth-data.json')
 let authData = JSON.parse(rawData)
-let login = authData["login"]
-let psw  = authData["psw"]
-
-
+let login = authData["mosobl"]["login"]
+let psw  = authData["mosobl"]["psw"]
 
 async function sendStatsToLK(spreadsheetStats){
     console.log("Sending data to mosenergosbyt.ru...")
@@ -33,22 +37,28 @@ async function sendStatsToLK(spreadsheetStats){
         }
         return updatedCountersData
     })()
-    sendIndications(sessionID, countersData, vl_provider)
+    sendIndications(sessionID, dataToSend, vl_provider)
 }
 
 
-const optionsPost = {
-    port: 443, 
-    method: 'POST',
-  };
+async function getReciveDate(){
+    let sessionID = await authAndGetSessionID(login, psw)
+    let providerInfo = await getProviderInfo(sessionID)
+    let vl_provider = providerInfo[1].slice(14,22)
+    let reciveDate = await getCountersData(sessionID, vl_provider)
+    return reciveDate
+}
 
-function authAndGetSessionID (login, pws){
+
+function authAndGetSessionID (login, psw){
     return new Promise(function(resolve, reject) {
         const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=auth&query=login&login=${login}&psw=${psw}`, optionsPost, (res) => {
             res.on('data', (data) => {
+                if (optionsPost.headers["Cookie"] === undefined){
+                    let cookie = res.headers['set-cookie']
+                    optionsPost.headers = {'Cookie': cookie}
+                }
                 let sessionID = JSON.parse(data)['data'][0]['session']
-                let cookie = res.headers['set-cookie']
-                optionsPost.headers = {'Cookie': cookie}
                 if (sessionID == undefined) {
                     reject(new Error("No data"))
                 } else {
@@ -90,7 +100,15 @@ function getCountersData(sessionID,vl_provider) {
         const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=sql&query=smorodinaTransProxy&session=${sessionID}&plugin=smorodinaTransProxy&proxyquery=AbonentEquipment&vl_provider=%7B%22id_abonent%22%3A${vl_provider}%7D`, optionsPost, (res) => {
             res.on('data', (data) => {
                 JSON.parse(data)['data'].forEach(counterData => {
-                    let counter = {'id': counterData['id_counter'], 'name': counterData['nm_counter'], 'id_zn':counterData['id_counter_zn'], 'lastData': counterData['vl_last_indication'], 'descr': counterData['nm_service']}
+                    let counter = {
+                        'id'                    :counterData['id_counter'], 
+                        'name'                  :counterData['nm_counter'], 
+                        'id_zn'                 :counterData['id_counter_zn'], 
+                        'lastData'              :counterData['vl_last_indication'], 
+                        'descr'                 :counterData['nm_service'], 
+                        'nn_ind_receive_start'  :counterData['nn_ind_receive_start'], 
+                        'nn_ind_receive_end'    :counterData['nn_ind_receive_end']
+                    }
                     counters.push(counter)
                 });
                 if (counters.length === 0) {
@@ -123,4 +141,6 @@ function sendIndications (sessionID, counters, vl_provider) {
     })
 }
 
-module.exports = sendStatsToLK
+
+module.exports.sendStatsToLK = sendStatsToLK
+module.exports.getReciveDate = getReciveDate

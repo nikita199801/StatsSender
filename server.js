@@ -1,19 +1,32 @@
-const { Stats, stat } = require('fs');
+const { Stats, stat, fstat } = require('fs');
 const http = require('http');
-const dataSending = require('./sender')
-const collectData = require('./collector')
+const moment = require('moment');
+const sender = require('./sender')
+const collector = require('./collector')
+const cron = require ('node-cron')
+
 
 const hostname = '127.0.0.1';
 const port = 3000;
 
-function startApp(){
+async function startApp(){
     const server = http.createServer(eventHandler);
-
+    const countersData = await sender.getReciveDate().catch(err => console.log(err))
+    let reciveStart = countersData[0].nn_ind_receive_start
+    let reciveEnd = countersData[0].nn_ind_receive_end
+    let today = new Date().getDate()
     server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
-
-    });
+        console.log(`Server running at http://${hostname}:${port}/`)
+        cron.schedule('* 0 0 * * *', () => {
+            if ((today>= reciveStart)&(today< reciveEnd)){
+                req = http.request('http://127.0.0.1:3000/ready',{method: 'GET'}, (req, res) =>{
+                })
+                req.end()
+            }
+        })
+    })
 }
+
 
 
 function eventHandler(req, res){
@@ -21,8 +34,8 @@ function eventHandler(req, res){
         case 'GET':{
             switch(req.url){
                 case '/ready':{
-                    console.log('Data is ready to transfer, starting...')
-                    collectData()   
+                    console.log('Trying to collect data...')
+                    collector()
                     res.end()
                     break
                 }
@@ -38,10 +51,10 @@ function eventHandler(req, res){
                         let stats = JSON.parse(data).counterStats
                         console.log('Income data:', stats)
                         console.log('Successfully recived data from spreadSheet')
-                        dataSending(stats)
+                        sender.sendStatsToLK(stats)
                     })
                     res.end();
-                    req.on('end', ()=>{
+                    req.on('end', ()=> {
                         console.log('Data sendig finished!')
                     })
 
