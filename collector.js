@@ -1,9 +1,11 @@
 const fs = require('fs')
 const readline = require('readline');
 const http = require('http');
+const moment = require('moment');
 const {google} = require('googleapis');
 const { fusiontables } = require('googleapis/build/src/apis/fusiontables');
 const { get } = require('http');
+const { format } = require('path');
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const TOKEN_PATH = 'token.json';
 
@@ -20,7 +22,8 @@ async function getStats(auth){
     if (counterStats[4].toLowerCase() == 'true') {
       sendData({counterStats:counterStats})
     } else {
-      console.error("Some of the cells are empty. Data couldn't be sent")
+      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`,{format: 'a+'})
+      // console.error("Some of the cells are empty. Data couldn't be sent")
     }
   }).catch(err => console.error(err))
 }
@@ -34,6 +37,7 @@ function sendData(data){
       "Content-Length": Buffer.byteLength(body)
     },
   }
+  fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data on server \r\n`,{format: 'a+'})
   console.log(`Sending data on server`)
   const req = http.request('http://localhost:3000/send', options, (res)=>{
     console.log(`Data sent ${body}`)

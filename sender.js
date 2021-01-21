@@ -5,6 +5,7 @@ const fs = require('fs');
 const https = require('https');
 const { auth } = require('googleapis/build/src/apis/abusiveexperiencereport');
 const { log } = require('util');
+const report = require('./report')
 
 let optionsPost = {
     port: 443, 
@@ -132,6 +133,7 @@ function sendIndications (sessionID, counters, vl_provider) {
             const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=sql&query=AbonentSaveIndication&session=${sessionID}&dt_indication=${date}&id_counter=${counters[idx]['id']}&id_counter_zn=${counters[idx]['id_zn']}&id_source=15418&plugin=propagateMoeInd&pr_skip_anomaly=0&pr_skip_err=0&vl_indication=${counters[idx].currentStats}&vl_provider=%7B%22id_abonent%22%3A${vl_provider}%7D`, 
         optionsPost, (res) => {
                 console.log(`\n${counters[idx].descr} data updated`)
+                report.sendLogsToEmail()
                 res.on('data', (data) => {
                     process.stdout.write(data)
                 })

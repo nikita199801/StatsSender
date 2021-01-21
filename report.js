@@ -1,6 +1,5 @@
 const nodemailer = require('nodemailer');
-const fs = require('fs')
-
+const moment = require('moment')
 
 let rawData = fs.readFileSync('auth-data.json')
 let authData = JSON.parse(rawData)
@@ -17,12 +16,12 @@ let transporter = nodemailer.createTransport({
     }
   });
   
-  async function sendLogs(){
+  async function sendLogsToEmail(){
     let result = await transporter.sendMail({
       from: '"StatsSender" <stats.report@yandex.ru>',
       to: "nikita199801@gmail.com",
       subject: "Stats sent",
-      text: "This message was sent from Node js server.",
+      text: `Here are the data sending atteption logs on ${moment().format('ll')}`,
       attachments: [{
         filename: 'log.txt', path: './logs/log.txt'
       }]
@@ -30,4 +29,4 @@ let transporter = nodemailer.createTransport({
     console.log(result)
   }
 
-module.exports.sendLogs = sendLogs
+module.exports.sendLogsToEmail = sendLogsToEmail

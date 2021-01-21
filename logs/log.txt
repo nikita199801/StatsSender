@@ -1,2 +1,7 @@
-Jan 21, 2021 :: 
-H2 cell now is 1 
+Jan 22, 2021 2:16 AM :: Data sending finished! 
+Jan 22, 2021 2:20 AM :: Trying to collect data... 
+Jan 22, 2021 2:20 AM :: Sending data on server 
+Jan 22, 2021 2:20 AM :: Incoming request... 
+Jan 22, 2021 2:20 AM :: Income data 71,129,5558,2216,TRUE 
+Jan 22, 2021 2:20 AM :: Successfully recived data from spreadSheet 
+Jan 22, 2021 2:20 AM :: Data sending finished! 

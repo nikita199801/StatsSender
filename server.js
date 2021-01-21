@@ -4,8 +4,7 @@ const moment = require('moment');
 const sender = require('./sender')
 const collector = require('./collector')
 const cron = require ('node-cron')
-
-
+const fs = require('fs')
 const hostname = '127.0.0.1';
 const port = 3000;
 
@@ -34,6 +33,7 @@ function eventHandler(req, res){
         case 'GET':{
             switch(req.url){
                 case '/ready':{
+                    fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Trying to collect data... \r\n`, {format: 'a+'})
                     console.log('Trying to collect data...')
                     collector()
                     res.end()
@@ -44,22 +44,27 @@ function eventHandler(req, res){
         case 'POST':{
             switch(req.url){
                 case '/send':{
-                    console.log("Incoming request...")
+                    fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Incoming request... \r\n`, {format: 'a+'})
+                    // console.log("Incoming request...")
                     res.statusCode = 200
                     res.setHeader('Content-Type', 'text/plain');
                     req.on('data', data =>{
                         let stats = JSON.parse(data).counterStats
-                        console.log('Income data:', stats)
-                        console.log('Successfully recived data from spreadSheet')
+                        fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Income data ${stats} \r\n`, {format: 'a+'})
+                        // console.log('Income data:', stats)
+                        fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Successfully recived data from spreadSheet \r\n`, {format: 'a+'})
+                        // console.log('Successfully recived data from spreadSheet')
                         sender.sendStatsToLK(stats)
                     })
                     res.end();
                     req.on('end', ()=> {
-                        console.log('Data sendig finished!')
+                        fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Data sending finished! \r\n`, {format: 'a+'})
+                        // console.log('Data sendig finished!')
                     })
 
                     req.on('error', (err)=> {
-                        console.error("Something went wrong", err)
+                        fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Something went wrong \r\n`, {format: 'a+'})
+                        // console.error("Something went wrong", err)
                     })
                     break;
                 }
