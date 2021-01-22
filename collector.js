@@ -17,15 +17,14 @@ function getStatsWrapper(){
 }
 
 async function getStats(auth){
-  let row = await getCurrentRow(auth)
+  let row = await getCurrentRow(auth).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
   getCurrentStats(auth, row).then((counterStats)=>{
     if (counterStats[4].toLowerCase() == 'true') {
       sendData({counterStats:counterStats})
     } else {
-      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`,{format: 'a+'})
-      // console.error("Some of the cells are empty. Data couldn't be sent")
+      console.log(`Some of the cells are empty. Data couldn't be sent`)
     }
-  }).catch(err => console.error(err))
+  }).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
 }
 
 function sendData(data){
@@ -41,12 +40,11 @@ function sendData(data){
   console.log(`Sending data on server`)
   const req = http.request('http://localhost:3000/send', options, (res)=>{
     console.log(`Data sent ${body}`)
-    console.log('Waiting for response...')
     if (res.statusCode === 200) {
-      console.log('Data Recived')
+      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Data Recived \r\n`,{format: 'a+'})
       return
     } else {
-      console.error("Data sending failed")
+      fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Data sending failed \r\n`,{format: 'a+'})
       return
     }
   })
@@ -56,7 +54,6 @@ function sendData(data){
 function authorize(credentials, callback) {
   const {client_secret, client_id, redirect_uris} = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-  // Check if we have previously stored a token.
   fs.readFile(TOKEN_PATH, (err, token) => {
     if (err) return getNewToken(oAuth2Client, callback);
     oAuth2Client.setCredentials(JSON.parse(token));
@@ -81,7 +78,6 @@ function getNewToken(oAuth2Client, callback) {
     oAuth2Client.getToken(code, (err, token) => {
       if (err) return console.error('Error while trying to retrieve access token', err);
       oAuth2Client.setCredentials(token);
-      // Store the token to disk for later program executions
       fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
         if (err) return console.error(err);
         console.log('Token stored to', TOKEN_PATH);
@@ -103,6 +99,7 @@ function getCurrentRow(auth){
     })
   })
 }
+
 function getCurrentStats(auth, row){
   return new Promise(function(resolve, reject){
     const sheets = google.sheets({version: 'v4', auth});
@@ -114,7 +111,7 @@ function getCurrentStats(auth, row){
       const rows = res.data.values;
       if (rows[row][4].toLowerCase() == 'true'){
         setRowVar(auth, row)
-        console.log("Data is ready, sending...")
+        fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Data is ready, sending... \r\n`,{format: 'a+'})
         resolve(rows[row])
       } else {
         reject("Stats are incomplete or already have been sent")
@@ -138,7 +135,7 @@ function setRowVar(auth, currentRowVar) {
     if(err){
       console.log(err)
     } else {
-      console.log("\nH2 cell now is %d", values[0][0])
+      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: H2 cell now is ${values[0][0]} \r\n`,{format: 'a+'})
     }
   })
 }
