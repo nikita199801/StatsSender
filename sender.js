@@ -13,8 +13,9 @@ let optionsPost = {
     headers:{}
   };
 
-let rawData = fs.readFileSync('auth-data.json')
-let authData = JSON.parse(rawData)
+// let rawData = fs.readFileSync('auth-data.json')
+// let authData = JSON.parse(rawData)
+let authData = process.env.AUTH_DATA
 let login = authData["mosobl"]["login"]
 let psw  = authData["mosobl"]["psw"]
 
