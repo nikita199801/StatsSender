@@ -78,7 +78,8 @@ function authAndGetSessionID (login, psw){
 function getProviderInfo(sessionID) {
     return new Promise(function (resolve, reject) {
         const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=sql&query=LSList&session=${sessionID}`, optionsPost, (res) => {
-            res.on('data', (data) => {
+           setTimeout(() =>{
+                res.on('data', (data) => {
                 // vl_provider = JSON.parse(data)['data'][0]["vl_provider"]
                 if (vl_provider == undefined) {
                     reject(new Error("Can't find provider"))
@@ -87,6 +88,7 @@ function getProviderInfo(sessionID) {
                     resolve (arr)
                 }
             })
+           },2000)
         })
         req.on('error', err => {
             fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting provider info  \r\n`,{format: 'a+'})
