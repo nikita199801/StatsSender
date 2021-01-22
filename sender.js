@@ -18,7 +18,6 @@ let authData = JSON.parse(rawData)
 let login = authData["mosobl"]["login"]
 let psw  = authData["mosobl"]["psw"]
 
-
 async function sendStatsToLK(spreadsheetStats){
     fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data to mosenergosbyt.ru... \r\n`,{format: 'a+'})
     let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
@@ -64,14 +63,13 @@ function authAndGetSessionID (login, psw){
                 if (sessionID == undefined) {
                     reject(new Error("No data"))
                 } else {
-                    console.log(sessionID)
                     resolve(sessionID)
                 }
             })
         })
         req.on('error', err => {
             fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while auth  \r\n`,{format: 'a+'})
-            report.sendErrorLogsToEmail()
+            report.sendErrorLogsToEmail().catch(err => console.log(err))
         })
         req.end()
     })
@@ -92,7 +90,7 @@ function getProviderInfo(sessionID) {
         })
         req.on('error', err => {
             fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting provider info  \r\n`,{format: 'a+'})
-            report.sendErrorLogsToEmail()
+            report.sendErrorLogsToEmail().catch(err => console.log(err))
         })
         req.end();
     }) 
@@ -125,7 +123,7 @@ function getCountersData(sessionID,vl_provider) {
         })
         req.on('error', err => {
             fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting counters data  \r\n`,{format: 'a+'})
-            report.sendErrorLogsToEmail()
+            report.sendErrorLogsToEmail().catch(err => console.log(err))
         })
         req.end()
     })
@@ -138,14 +136,14 @@ function sendIndications (sessionID, counters, vl_provider) {
             const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=sql&query=AbonentSaveIndication&session=${sessionID}&dt_indication=${date}&id_counter=${counters[idx]['id']}&id_counter_zn=${counters[idx]['id_zn']}&id_source=15418&plugin=propagateMoeInd&pr_skip_anomaly=0&pr_skip_err=0&vl_indication=${counters[idx].currentStats}&vl_provider=%7B%22id_abonent%22%3A${vl_provider}%7D`, 
         optionsPost, (res) => {
                 fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: ${counters[idx].descr} data updated \r\n`,{format: 'a+'})
-                report.sendLogsToEmail()
+                report.sendLogsToEmail().catch(err => console.log(err))
                 res.on('data', (data) => {
                     fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: ${JSON.parse(data)['data'][0]['nm_result']} \r\n`,{format: 'a+'})
                 })
             })
             req.on('error', err =>{
                 fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while sending indications  \r\n`,{format: 'a+'})
-                report.sendErrorLogsToEmail()
+                report.sendErrorLogsToEmail().catch(err => console.log(err))
             })
             req.end()
         }

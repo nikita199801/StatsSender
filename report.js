@@ -27,6 +27,7 @@ let transporter = nodemailer.createTransport({
         filename: 'log.txt', path: './logs/log.txt'
       }]
     })
+    console.log(result)
   }
 
   async function sendErrorLogsToEmail(){
@@ -36,10 +37,11 @@ let transporter = nodemailer.createTransport({
       subject: "Stats sent",
       text: `Something went wrong in sending attempiton on ${moment().format('ll')}`,
       attachments: [{
-        filename: 'log.txt', path: './logs/error_logs.txt'
+        filename: 'error_logs.txt', path: './logs/error_logs.txt'
       }]
     })
   }
+
 
 module.exports.sendLogsToEmail = sendLogsToEmail
 module.exports.sendErrorLogsToEmail = sendErrorLogsToEmail

@@ -17,14 +17,14 @@ async function startApp(){
     let today = new Date().getDate()
     server.listen(port, hostname, () => {
         console.log(`Server running at http://${hostname}:${port}/`)
-        cron.schedule('* 0 0 * * *', () => {
-            if ((today>= reciveStart)&(today< reciveEnd)){
+        cron.schedule('0 0 */12 * * *', () => {
+            if ((today>= reciveStart)&(today<= reciveEnd)){
                 console.log('Attempt to send')
                 req = http.request('http://127.0.0.1:3000/ready',{method: 'GET'}, (req, res) =>{
                 })
                 req.end()
             }
-        })
+        }, {timezone : "Europe/Moscow"})
     })
 }
 
