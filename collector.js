@@ -26,7 +26,7 @@ async function getStats(auth){
     if (counterStats[4].toLowerCase() == 'true') {
       sendData({counterStats:counterStats})
     } else {
-      console.log(`Some of the cells are empty. Data couldn't be sent`)
+      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`,{format: 'a+'})
     }
   }).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
 }
