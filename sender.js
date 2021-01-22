@@ -13,11 +13,6 @@ let optionsPost = {
     headers:{}
   };
 
-<<<<<<< HEAD
-
-=======
-  
->>>>>>> e8f6aa4c3428fba7ecb0db0e8a19a56aa7833463
 let login = process.env.LOGIN_MOSOBL
 let psw  = process.env.PSW_MOSOBL
 
