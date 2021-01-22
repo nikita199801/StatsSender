@@ -18,6 +18,7 @@ let authData = JSON.parse(rawData)
 let login = authData["mosobl"]["login"]
 let psw  = authData["mosobl"]["psw"]
 
+
 async function sendStatsToLK(spreadsheetStats){
     fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data to mosenergosbyt.ru... \r\n`,{format: 'a+'})
     let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
@@ -63,6 +64,7 @@ function authAndGetSessionID (login, psw){
                 if (sessionID == undefined) {
                     reject(new Error("No data"))
                 } else {
+                    console.log(sessionID)
                     resolve(sessionID)
                 }
             })
