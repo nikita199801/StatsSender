@@ -13,10 +13,10 @@ let optionsPost = {
     headers:{}
   };
 
-// let rawData = fs.readFileSync('auth-data.json')
-// let authData = JSON.parse(rawData)
-let login = process.env.LOGIN_MOSOBL
-let psw  = process.env.PSW_MOSOBL
+let rawData = fs.readFileSync('auth-data.json')
+let authData = JSON.parse(rawData)
+let login = authData["mosobl"]["login"]
+let psw  = authData["mosobl"]["psw"]
 
 async function sendStatsToLK(spreadsheetStats){
     fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data to mosenergosbyt.ru... \r\n`,{format: 'a+'})
