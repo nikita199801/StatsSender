@@ -19,16 +19,16 @@ let login = authData["mosobl"]["login"]
 let psw  = authData["mosobl"]["psw"]
 
 async function sendStatsToLK(spreadsheetStats){
-    console.log("Sending data to mosenergosbyt.ru...")
-    let sessionID = await authAndGetSessionID(login, psw)
-    let providerInfo = await getProviderInfo(sessionID)
+    fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data to mosenergosbyt.ru... \r\n`,{format: 'a+'})
+    let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    let providerInfo = await getProviderInfo(sessionID).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     let vl_provider = providerInfo[1].slice(14,22)
-    let countersData = await getCountersData(sessionID, vl_provider)
+    let countersData = await getCountersData(sessionID, vl_provider).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     let dataToSend = await (async()=>{
         let updatedCountersData =[]
         for(idx = 0; idx < 4; idx++) {
             if (spreadsheetStats[idx] < countersData[idx].lastData){
-                console.log("New data can't be less than last data")
+                // console.log("New data can't be less than last data")
                 countersData[idx].currentStats = countersData[idx].lastData
                 updatedCountersData.push(countersData[idx]) 
             } else {
@@ -43,10 +43,10 @@ async function sendStatsToLK(spreadsheetStats){
 
 
 async function getReciveDate(){
-    let sessionID = await authAndGetSessionID(login, psw)
-    let providerInfo = await getProviderInfo(sessionID)
+    let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    let providerInfo = await getProviderInfo(sessionID).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     let vl_provider = providerInfo[1].slice(14,22)
-    let reciveDate = await getCountersData(sessionID, vl_provider)
+    let reciveDate = await getCountersData(sessionID, vl_provider).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     return reciveDate
 }
 
@@ -67,10 +67,10 @@ function authAndGetSessionID (login, psw){
                 }
             })
         })
-        req.on('error', (e) => {
-            console.error(e);
-        });
-
+        req.on('error', err => {
+            fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while auth  \r\n`,{format: 'a+'})
+            report.sendErrorLogsToEmail()
+        })
         req.end()
     })
 }
@@ -88,9 +88,10 @@ function getProviderInfo(sessionID) {
                 }
             })
         })
-        req.on('error', (e) => {
-            console.error(e);
-        });
+        req.on('error', err => {
+            fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting provider info  \r\n`,{format: 'a+'})
+            report.sendErrorLogsToEmail()
+        })
         req.end();
     }) 
 }
@@ -118,10 +119,12 @@ function getCountersData(sessionID,vl_provider) {
                     resolve(counters)
                 }
             } )
+
         })
-        req.on('error', (e) => {
-            console.error(e);
-        });
+        req.on('error', err => {
+            fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting counters data  \r\n`,{format: 'a+'})
+            report.sendErrorLogsToEmail()
+        })
         req.end()
     })
 }
@@ -132,14 +135,19 @@ function sendIndications (sessionID, counters, vl_provider) {
             date = moment().format()
             const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=sql&query=AbonentSaveIndication&session=${sessionID}&dt_indication=${date}&id_counter=${counters[idx]['id']}&id_counter_zn=${counters[idx]['id_zn']}&id_source=15418&plugin=propagateMoeInd&pr_skip_anomaly=0&pr_skip_err=0&vl_indication=${counters[idx].currentStats}&vl_provider=%7B%22id_abonent%22%3A${vl_provider}%7D`, 
         optionsPost, (res) => {
-                console.log(`\n${counters[idx].descr} data updated`)
+                fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: ${counters[idx].descr} data updated \r\n`,{format: 'a+'})
                 report.sendLogsToEmail()
                 res.on('data', (data) => {
-                    process.stdout.write(data)
+                    fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: ${JSON.parse(data)['data'][0]['nm_result']} \r\n`,{format: 'a+'})
                 })
+            })
+            req.on('error', err =>{
+                fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while sending indications  \r\n`,{format: 'a+'})
+                report.sendErrorLogsToEmail()
             })
             req.end()
         }
+        console.log("Report sent to email")
     })
 }
 

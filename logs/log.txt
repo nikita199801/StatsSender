@@ -1,7 +1,19 @@
-Jan 22, 2021 2:16 AM :: Data sending finished! 
-Jan 22, 2021 2:20 AM :: Trying to collect data... 
-Jan 22, 2021 2:20 AM :: Sending data on server 
-Jan 22, 2021 2:20 AM :: Incoming request... 
-Jan 22, 2021 2:20 AM :: Income data 71,129,5558,2216,TRUE 
-Jan 22, 2021 2:20 AM :: Successfully recived data from spreadSheet 
-Jan 22, 2021 2:20 AM :: Data sending finished! 
+Jan 22, 2021 12:53 PM :: Trying to collect data... 
+Jan 22, 2021 12:54 PM :: Trying to collect data... 
+Jan 22, 2021 12:54 PM :: Data is ready, sending... 
+Jan 22, 2021 12:54 PM :: Sending data on server 
+Jan 22, 2021 12:54 PM :: Incoming request... 
+Jan 22, 2021 12:54 PM :: Income data 71,129,5558,2216,TRUE 
+Jan 22, 2021 12:54 PM :: Successfully recived data from spreadSheet 
+Jan 22, 2021 12:54 PM :: Sending data to mosenergosbyt.ru... 
+Jan 22, 2021 12:54 PM :: Data sending finished! 
+Jan 22, 2021 12:54 PM :: Data Recived 
+Jan 22, 2021 12:54 PM :: ЭЛЕКТРОСНАБЖЕНИЕ НОЧЬ data updated 
+Jan 22, 2021 12:54 PM :: Показания успешно переданы 
+Jan 22, 2021 12:54 PM :: ГОРЯЧЕЕ ВОДОСНАБЖЕНИЕ (НОСИТЕЛЬ) data updated 
+Jan 22, 2021 12:54 PM :: Показания успешно переданы 
+Jan 22, 2021 12:54 PM :: ЭЛЕКТРОСНАБЖЕНИЕ ДЕНЬ data updated 
+Jan 22, 2021 12:54 PM :: Показания успешно переданы 
+Jan 22, 2021 12:54 PM :: ХОЛОДНАЯ ВОДА data updated 
+Jan 22, 2021 12:54 PM :: Показания успешно переданы 
+Jan 22, 2021 12:54 PM :: H2 cell now is 1 
