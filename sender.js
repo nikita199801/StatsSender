@@ -13,9 +13,10 @@ let optionsPost = {
     headers:{}
   };
 
-
-let login = process.env.LOGIN_MOSOBL
-let psw  = process.env.PSW_MOSOBL
+let rawData = fs.readFileSync('auth-data.json')
+let authData = JSON.parse(rawData)
+let login = authData["mosobl"]["login"]
+let psw  = authData["mosobl"]["psw"]
 
 async function sendStatsToLK(spreadsheetStats){
     fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data to mosenergosbyt.ru... \r\n`,{format: 'a+'})
@@ -62,7 +63,6 @@ function authAndGetSessionID (login, psw){
                 if (sessionID == undefined) {
                     reject(new Error("No data"))
                 } else {
-                    console.log(sessionID)
                     resolve(sessionID)
                 }
             })
@@ -78,9 +78,8 @@ function authAndGetSessionID (login, psw){
 function getProviderInfo(sessionID) {
     return new Promise(function (resolve, reject) {
         const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=sql&query=LSList&session=${sessionID}`, optionsPost, (res) => {
-           setTimeout(() =>{
-                res.on('data', (data) => {
-                // vl_provider = JSON.parse(data)['data'][0]["vl_provider"]
+            res.on('data', (data) => {
+                vl_provider = JSON.parse(data)['data'][0]["vl_provider"]
                 if (vl_provider == undefined) {
                     reject(new Error("Can't find provider"))
                 } else {
@@ -88,7 +87,6 @@ function getProviderInfo(sessionID) {
                     resolve (arr)
                 }
             })
-           },2000)
         })
         req.on('error', err => {
             fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting provider info  \r\n`,{format: 'a+'})
