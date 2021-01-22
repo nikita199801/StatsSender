@@ -1,6 +1,3 @@
-auth-data.json
-token.json
-credentials.json
 node_modules
 .vscode
 logs
