@@ -22,11 +22,7 @@ async function getStats(auth){
     if (counterStats[4].toLowerCase() == 'true') {
       sendData({counterStats:counterStats})
     } else {
-<<<<<<< HEAD
       fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`,{format: 'a+'})
-=======
-      console.log(`Some of the cells are empty. Data couldn't be sent`)
->>>>>>> 8a7c643743aaa79939da9fa3b39b126301ea84c5
     }
   }).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
 }
