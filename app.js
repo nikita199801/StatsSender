@@ -1,7 +1,7 @@
 const fs = require('fs')
 const runServer = require('./server')
 
-// console.log(process.env)
+console.log("Starting app...")
 
 // fs.writeFileSync('./token.json', `${JSON.stringify(process.env.TOKEN)}`, {format: 'a+'})
 // fs.writeFileSync('./credentials.json', `${JSON.stringify(process.env.CREDENTIALS)}`, {format: 'a+'})
