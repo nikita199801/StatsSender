@@ -13,7 +13,7 @@ let optionsPost = {
     headers:{}
   };
 
-  
+
 let login = process.env.LOGIN_MOSOBL
 let psw  = process.env.PSW_MOSOBL
 
@@ -62,6 +62,7 @@ function authAndGetSessionID (login, psw){
                 if (sessionID == undefined) {
                     reject(new Error("No data"))
                 } else {
+                    console.log(sessionID)
                     resolve(sessionID)
                 }
             })
