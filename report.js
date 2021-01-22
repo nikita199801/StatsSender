@@ -2,10 +2,9 @@ const nodemailer = require('nodemailer');
 const moment = require('moment')
 const fs = require('fs')
 
-let rawData = fs.readFileSync('auth-data.json')
-let authData = JSON.parse(rawData)
-let login = authData["email"]["login"]
-let psw  = authData["email"]["psw"]
+
+let login = process.env.LOGIN_EMAIL
+let psw  = process.env.PSW_EMAIL
 
 let transporter = nodemailer.createTransport({
     host: 'smtp.yandex.ru',
