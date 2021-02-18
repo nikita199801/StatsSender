@@ -7,23 +7,26 @@ const { auth } = require('googleapis/build/src/apis/abusiveexperiencereport');
 const { log } = require('util');
 const report = require('./report')
 
+const errorLogs = __dirname+"/logs/error_logs.txt"
+const logs = __dirname+"/logs/logs.txt"
+
 let optionsPost = {
     port: 443, 
     method: 'POST',
     headers:{}
   };
 
-let rawData = fs.readFileSync('auth-data.json')
+let rawData = fs.readFileSync(__dirname+'/auth-data.json')
 let authData = JSON.parse(rawData)
 let login = authData["mosobl"]["login"]
 let psw  = authData["mosobl"]["psw"]
 
 async function sendStatsToLK(spreadsheetStats){
-    fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data to mosenergosbyt.ru... \r\n`,{format: 'a+'})
-    let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
-    let providerInfo = await getProviderInfo(sessionID).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    fs.appendFileSync(logs, `${moment().format('lll')} :: Sending data to mosenergosbyt.ru... \r\n`,{format: 'a+'})
+    let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    let providerInfo = await getProviderInfo(sessionID).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     let vl_provider = providerInfo[1].slice(14,22)
-    let countersData = await getCountersData(sessionID, vl_provider).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    let countersData = await getCountersData(sessionID, vl_provider).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     let dataToSend = await (async()=>{
         let updatedCountersData =[]
         for(idx = 0; idx < 4; idx++) {
@@ -38,15 +41,20 @@ async function sendStatsToLK(spreadsheetStats){
         }
         return updatedCountersData
     })()
-    sendIndications(sessionID, dataToSend, vl_provider)
+    sendIndications(sessionID, dataToSend, vl_provider).then(err => {
+        if (err){
+            report.sendErrorLogsToEmail().catch(err => console.log(err))
+        } else
+            report.sendLogsToEmail().catch(err => console.log(err))
+    })
 }
 
 
 async function getReciveDate(){
-    let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
-    let providerInfo = await getProviderInfo(sessionID).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    let sessionID = await authAndGetSessionID(login, psw).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    let providerInfo = await getProviderInfo(sessionID).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     let vl_provider = providerInfo[1].slice(14,22)
-    let reciveDate = await getCountersData(sessionID, vl_provider).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+    let reciveDate = await getCountersData(sessionID, vl_provider).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
     return reciveDate
 }
 
@@ -68,7 +76,7 @@ function authAndGetSessionID (login, psw){
             })
         })
         req.on('error', err => {
-            fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while auth  \r\n`,{format: 'a+'})
+            fs.appendFileSync(errorLogs, `${moment().format('lll')} :: Error while auth  \r\n`,{format: 'a+'})
             report.sendErrorLogsToEmail().catch(err => console.log(err))
         })
         req.end()
@@ -89,7 +97,7 @@ function getProviderInfo(sessionID) {
             })
         })
         req.on('error', err => {
-            fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting provider info  \r\n`,{format: 'a+'})
+            fs.appendFileSync(errorLogs, `${moment().format('lll')} :: Error while getting provider info  \r\n`,{format: 'a+'})
             report.sendErrorLogsToEmail().catch(err => console.log(err))
         })
         req.end();
@@ -122,7 +130,7 @@ function getCountersData(sessionID,vl_provider) {
 
         })
         req.on('error', err => {
-            fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while getting counters data  \r\n`,{format: 'a+'})
+            fs.appendFileSync(errorLogs, `${moment().format('lll')} :: Error while getting counters data  \r\n`,{format: 'a+'})
             report.sendErrorLogsToEmail().catch(err => console.log(err))
         })
         req.end()
@@ -131,22 +139,25 @@ function getCountersData(sessionID,vl_provider) {
 
 function sendIndications (sessionID, counters, vl_provider) {
     return new Promise(function(resolve, reject) {
+        let errorFlag = false
         for(let idx = 0; idx < counters.length; idx++){
             date = moment().format()
             const req = https.request(`https://my.mosenergosbyt.ru/gate_lkcomu?action=sql&query=AbonentSaveIndication&session=${sessionID}&dt_indication=${date}&id_counter=${counters[idx]['id']}&id_counter_zn=${counters[idx]['id_zn']}&id_source=15418&plugin=propagateMoeInd&pr_skip_anomaly=0&pr_skip_err=0&vl_indication=${counters[idx].currentStats}&vl_provider=%7B%22id_abonent%22%3A${vl_provider}%7D`, 
         optionsPost, (res) => {
-                fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: ${counters[idx].descr} data updated \r\n`,{format: 'a+'})
-                report.sendLogsToEmail().catch(err => console.log(err))
+                fs.appendFileSync(logs, `${moment().format('lll')} :: ${counters[idx].descr} data updated \r\n`,{format: 'a+'})
                 res.on('data', (data) => {
-                    fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: ${JSON.parse(data)['data'][0]['nm_result']} \r\n`,{format: 'a+'})
+                    fs.appendFileSync(logs, `${moment().format('lll')} :: ${JSON.parse(data)['data'][0]['nm_result']} \r\n`,{format: 'a+'})
                 })
             })
             req.on('error', err =>{
-                fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Error while sending indications  \r\n`,{format: 'a+'})
-                report.sendErrorLogsToEmail().catch(err => console.log(err))
+                fs.appendFileSync(errorLogs, `${moment().format('lll')} :: Error while sending indications  \r\n`,{format: 'a+'})
+                errorFlag = true
             })
             req.end()
         }
+        setTimeout(()=>{
+            resolve(errorFlag)
+        },5000)
         console.log("Report sent to email")
     })
 }

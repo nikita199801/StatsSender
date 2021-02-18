@@ -7,24 +7,28 @@ const { fusiontables } = require('googleapis/build/src/apis/fusiontables');
 const { get } = require('http');
 const { format } = require('path');
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
-const TOKEN_PATH = 'token.json';
+const TOKEN_PATH = __dirname+'/token.json';
+
+const errorLogs = __dirname+"/logs/error_logs.txt"
+const logs = __dirname+"/logs/logs.txt"
+
 
 function getStatsWrapper(){
-  fs.readFile('credentials.json', (err, content) => {
+  fs.readFile(__dirname+'/credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err) 
     authorize(JSON.parse(content), getStats)
   })
 }
 
 async function getStats(auth){
-  let row = await getCurrentRow(auth).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+  let row = await getCurrentRow(auth).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
   getCurrentStats(auth, row).then((counterStats)=>{
     if (counterStats[4].toLowerCase() == 'true') {
       sendData({counterStats:counterStats})
     } else {
-      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`,{format: 'a+'})
+      fs.appendFileSync(logs, `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`,{format: 'a+'})
     }
-  }).catch(err => fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+  }).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
 }
 
 function sendData(data){
@@ -36,15 +40,15 @@ function sendData(data){
       "Content-Length": Buffer.byteLength(body)
     },
   }
-  fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Sending data on server \r\n`,{format: 'a+'})
+  fs.appendFileSync(logs, `${moment().format('lll')} :: Sending data on server \r\n`,{format: 'a+'})
   console.log(`Sending data on server`)
-  const req = http.request('http://localhost:3000/send', options, (res)=>{
+  const req = http.request('http://localhost:5000/send', options, (res)=>{
     console.log(`Data sent ${body}`)
     if (res.statusCode === 200) {
-      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Data Recived \r\n`,{format: 'a+'})
+      fs.appendFileSync(logs, `${moment().format('lll')} :: Data Recived \r\n`,{format: 'a+'})
       return
     } else {
-      fs.appendFileSync('./logs/error_logs.txt', `${moment().format('lll')} :: Data sending failed \r\n`,{format: 'a+'})
+      fs.appendFileSync(errorLogs, `${moment().format('lll')} :: Data sending failed \r\n`,{format: 'a+'})
       return
     }
   })
@@ -111,7 +115,7 @@ function getCurrentStats(auth, row){
       const rows = res.data.values;
       if (rows[row][4].toLowerCase() == 'true'){
         setRowVar(auth, row)
-        fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: Data is ready, sending... \r\n`,{format: 'a+'})
+        fs.appendFileSync(logs, `${moment().format('lll')} :: Data is ready, sending... \r\n`,{format: 'a+'})
         resolve(rows[row])
       } else {
         reject("Stats are incomplete or already have been sent")
@@ -135,7 +139,7 @@ function setRowVar(auth, currentRowVar) {
     if(err){
       console.log(err)
     } else {
-      fs.appendFileSync('./logs/log.txt', `${moment().format('lll')} :: H2 cell now is ${values[0][0]} \r\n`,{format: 'a+'})
+      fs.appendFileSync(logs, `${moment().format('lll')} :: H2 cell now is ${values[0][0]} \r\n`,{format: 'a+'})
     }
   })
 }

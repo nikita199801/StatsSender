@@ -1,8 +1,9 @@
 const nodemailer = require('nodemailer');
 const moment = require('moment')
 const aws = require('aws-sdk')
+const fs = require('fs')
 
-aws.config.loadFromPath('./ses_config.json')
+aws.config.loadFromPath(__dirname+'/ses_config.json')
 
 let transporter = nodemailer.createTransport({
    SES: new aws.SES({
@@ -18,10 +19,11 @@ async function sendErrorLogsToEmail(){
     text: `Something went wrong in sending attempiton on ${moment().format('ll')}`,
     attachments: [{
       filename:`error_logs.txt`,
-      path: `./logs/error_logs.txt`
+      path: __dirname+`/logs/error_logs.txt`
     }] 
   }, (err, info) => {
-    console.log(info['envelope'], info['messageID'])
+    console.log(info.envelope, info.messageId)
+    fs.unlinkSync(__dirname+`/logs/error_logs.txt`)
   })
 }
 
@@ -32,11 +34,12 @@ async function sendErrorLogsToEmail(){
       subject: '=====SENDING_INFO=====',
       text: `Here are the data sending atteption logs on ${moment().format('ll')}`,
       attachments: [{
-        filename:`log.txt`,
-        path: `./logs/log.txt`
+        filename:`logs.txt`,
+        path: __dirname+`/logs/logs.txt`
       }] 
     }, (err, info) => {
-      console.log(info['envelope'], info['messageID'])
+      console.log(info.envelope, info.messageId)
+      fs.unlinkSync(__dirname+`/logs/logs.txt`)
     })
   }
 
