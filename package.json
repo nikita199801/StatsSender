@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.831.0",
+    "axios": "^0.21.1",
     "googleapis": "^39.2.0",
     "moment": "^2.29.1",
     "node-cron": "^2.0.3",
