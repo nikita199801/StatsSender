@@ -1,59 +1,51 @@
 const fs = require('fs')
 const readline = require('readline');
-const http = require('http');
 const moment = require('moment');
 const {google} = require('googleapis');
-const { fusiontables } = require('googleapis/build/src/apis/fusiontables');
-const { get } = require('http');
-const { format } = require('path');
+const axios  = require('axios');
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const TOKEN_PATH = __dirname+'/token.json';
 
-const errorLogs = __dirname+"/logs/error_logs.txt"
-const logs = __dirname+"/logs/logs.txt"
+const errorLogs = __dirname+"/logs/error_logs.txt";
+const logs = __dirname+"/logs/logs.txt";
 
 
-function getStatsWrapper(){
+function InitDataCollection(){
   fs.readFile(__dirname+'/credentials.json', (err, content) => {
-    if (err) return console.log('Error loading client secret file:', err) 
-    authorize(JSON.parse(content), getStats)
+    if (err) return console.log('Error loading client secret file:', err); 
+    authorize(JSON.parse(content), sendData);
   })
+}
+
+async function sendData(auth){
+  const data = await getStats(auth);
+  fs.appendFileSync(logs, `${moment().format('lll')} :: Stats collected \r\n`, { format: 'a+' });
+  fs.appendFileSync(logs, `${moment().format('lll')} :: Sending data on server \r\n`,{format: 'a+'});
+  console.log(`Sending data on server`);
+  try {
+    const res = await axios.post(`http://localhost:5000/send`, data);
+    return;
+  } catch (err){
+    fs.appendFileSync(errorLogs, `${moment().format('lll')} :: Data sending failed \r\n`, { format: 'a+' });
+    return;
+  }
 }
 
 async function getStats(auth){
-  let row = await getCurrentRow(auth).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
-  getCurrentStats(auth, row).then((counterStats)=>{
+  try {
+    const row = await getCurrentRow(auth).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}));
+    const { counterStats, rowId} = await getCurrentStats(auth, row);
     if (counterStats[4].toLowerCase() == 'true') {
-      sendData({counterStats:counterStats})
+      setRowVar(auth, rowId);
+      return counterStats;
     } else {
-      fs.appendFileSync(logs, `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`,{format: 'a+'})
+      fs.appendFileSync(logs, `${moment().format('lll')} :: Some of the cells are empty. Data couldn't be sent \r\n`, { format: 'a+' });
     }
-  }).catch(err => fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`,{format: 'a+'}))
+  } catch (err) {
+    fs.appendFileSync(errorLogs, `${moment().format('lll')} :: ${err} \r\n`, { format: 'a+' });
+  }
 }
 
-function sendData(data){
-  let body =JSON.stringify(data)
-  options = {
-    method: 'POST',
-    headers : {
-      "Content-Type": "application/json",
-      "Content-Length": Buffer.byteLength(body)
-    },
-  }
-  fs.appendFileSync(logs, `${moment().format('lll')} :: Sending data on server \r\n`,{format: 'a+'})
-  console.log(`Sending data on server`)
-  const req = http.request('http://localhost:5000/send', options, (res)=>{
-    console.log(`Data sent ${body}`)
-    if (res.statusCode === 200) {
-      fs.appendFileSync(logs, `${moment().format('lll')} :: Data Recived \r\n`,{format: 'a+'})
-      return
-    } else {
-      fs.appendFileSync(errorLogs, `${moment().format('lll')} :: Data sending failed \r\n`,{format: 'a+'})
-      return
-    }
-  })
-  req.end(body)
-}
 
 function authorize(credentials, callback) {
   const {client_secret, client_id, redirect_uris} = credentials.installed;
@@ -91,45 +83,46 @@ function getNewToken(oAuth2Client, callback) {
   });
 }
 
-function getCurrentRow(auth){
-  return new Promise(function (resolve, reject){
-    const sheets = google.sheets({version: 'v4', auth});
-    sheets.spreadsheets.values.get({
+async function getCurrentRow(auth){
+  try {
+    const sheets = google.sheets({ version: 'v4', auth});
+    const res = await sheets.spreadsheets.values.get({
       spreadsheetId: '1-RSIrL-tMbOUyBpy63WrQCMvo43OtUd-Nmn2pNOnH0M',
       range: "'Лист1'!H2",
-    }, (err, res) => {
-      if (err) reject('The API returned an error: ' + err)
-      resolve(res.data.values)
     })
-  })
+    return res.data.values;
+  } catch (err) {
+    console.error('The API returned an error: ' + err);
+  }
 }
 
-function getCurrentStats(auth, row){
-  return new Promise(function(resolve, reject){
-    const sheets = google.sheets({version: 'v4', auth});
-    sheets.spreadsheets.values.get({
+async function getCurrentStats(auth, rowId){
+  try {
+    const sheets = google.sheets({ version: 'v4', auth });
+    const res = await sheets.spreadsheets.values.get({
       spreadsheetId: '1-RSIrL-tMbOUyBpy63WrQCMvo43OtUd-Nmn2pNOnH0M',
       range: "'Лист1'!A2:E",
-    }, (err, res) => {
-      if (err) reject('The API returned an error: ' + err)
-      const rows = res.data.values;
-      if (rows[row][4].toLowerCase() == 'true'){
-        setRowVar(auth, row)
-        fs.appendFileSync(logs, `${moment().format('lll')} :: Data is ready, sending... \r\n`,{format: 'a+'})
-        resolve(rows[row])
-      } else {
-        reject("Stats are incomplete or already have been sent")
-      }
-    });
-  })
+    })
+
+    const counterStats = res.data.values;
+
+    if (counterStats[rowId][4].toLowerCase() == 'true') {
+      fs.appendFileSync(logs, `${moment().format('lll')} :: Data is ready, sending... \r\n`, { format: 'a+' })
+      return { counterStats: counterStats[rowId], rowId: rowId};
+    } else {
+      console.log("Stats are incomplete or already have been sent");
+    }
+  } catch (err) {
+    console.error('The API returned an error: ' + err);
+  }
 }
 
-function setRowVar(auth, currentRowVar) {
+function setRowVar(auth, currentRowId) {
   const sheets = google.sheets({version: 'v4', auth});
-  let values = [[Number(currentRowVar)+1]]
+  let values = [[Number(currentRowId)+1]]
   const resource = {
     values
-  }
+  };
   sheets.spreadsheets.values.update({
     spreadsheetId: '1-RSIrL-tMbOUyBpy63WrQCMvo43OtUd-Nmn2pNOnH0M',
     range: "H2",
@@ -137,11 +130,11 @@ function setRowVar(auth, currentRowVar) {
     resource: resource
   }, (err, result) =>{
     if(err){
-      console.log(err)
+      console.log(err);
     } else {
-      fs.appendFileSync(logs, `${moment().format('lll')} :: H2 cell now is ${values[0][0]} \r\n`,{format: 'a+'})
+      fs.appendFileSync(logs, `${moment().format('lll')} :: Next row will be ${values[0][0] + 1} \r\n`,{format: 'a+'});
     }
   })
 }
 
-  module.exports = getStatsWrapper
+module.exports = InitDataCollection;
